@@ -1,0 +1,33 @@
+name: Update publications.bib weekly
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"   # 毎週月曜 00:00 UTC = 日本時間 09:00
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: Build BibTeX from SerpApi
+        env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          SCHOLAR_AUTHOR_ID: ${{ secrets.SCHOLAR_AUTHOR_ID }}
+          SCHOLAR_LANG: ja
+        run: python scripts/build_bibtex.py
+
+      - name: Commit & push if changed
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: "publications/publications.bib"
+          message: "chore: update publications.bib"
